@@ -267,10 +267,27 @@ async def week_new(c: CallbackQuery):
     await c.answer("Yangi menyu tayyor")
 
 # ---------------- Ishga tushirish ----------------
+async def keep_alive_server():
+    """Render kabi bepul hostinglar uchun: PORT berilgan bo'lsa, kichik veb-sahifa ochadi.
+    UptimeRobot shu sahifani har 5 daqiqada ochib turadi, shunda server uxlab qolmaydi."""
+    port = os.getenv("PORT")
+    if not port:
+        return
+    from aiohttp import web
+    app = web.Application()
+    app.router.add_get("/", lambda r: web.Response(text="Nima Pishiray bot ishlayapti ✅"))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    await web.TCPSite(runner, "0.0.0.0", int(port)).start()
+    print(f"Veb-sahifa {port}-portda ochildi")
+
+
 async def main():
     if not TOKEN:
         raise SystemExit("BOT_TOKEN topilmadi. README.md ni ko'ring.")
+    await keep_alive_server()
     bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    await bot.delete_webhook(drop_pending_updates=True)
     print("Bot ishga tushdi ✅")
     await dp.start_polling(bot)
 
